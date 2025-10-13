@@ -59,11 +59,8 @@ void writeLCD(int addr, char c)
 
 char digit0, digit1, digit2;
 
-void getDigits(float num)
+void getDigits(int long tempi)
 {
-    // convert to int x 10
-    int tempi = num*10;
-    
     // first digit
     digit0 = tempi % 10;
     tempi = tempi / 10;
@@ -77,17 +74,7 @@ void getDigits(float num)
     tempi = tempi / 10;
 }
 
-float toC(int tempRaw)
-{
-    return (tempRaw-500) / 10; // from temp sensor datasheet
-}
-
-float toF(int tempRaw)
-{
-    return tempRaw;
-}
-
-void displayTemp(int temp)
+void displayTemp(int long tempC, int long tempF)
 {
     // Clear display
     clrLCD();
@@ -96,7 +83,7 @@ void displayTemp(int temp)
     homeLCD();
     
     // Display in Celcius
-    getDigits(toC(temp));
+    getDigits(tempC);
     putLCD(digit2+48);
     putLCD(digit1+48);
     putLCD('.');
@@ -108,62 +95,98 @@ void displayTemp(int temp)
     cmdLCD(0b11000000);
     
     // Display in Farenheit
-    getDigits(toF(temp));
-    putLCD(digit2+48);
+    getDigits(tempF);
+    //putLCD(digit2+48); skip leading zero
     putLCD(digit1+48);
-    putLCD('.');
     putLCD(digit0+48);
     putLCD(' ');
     putLCD('F');    
 }
 
-void _ISR _T1Interrupt (void)
+void displayPot(int long voltage)
 {
-    int tempRAW = 82;
+    // Clear display
+    clrLCD();
     
-    // start sample time
-    _SAMP=1;
-    Nop();
-    // wait for valid reading
-    while(!_DONE){}
-    // get result of buffer
-    tempRAW = ADC1BUF0;
+    // Home LCD
+    homeLCD();
     
-    int tempmV = tempRAW * 3300 / 1023; // mV
-    
-    displayTemp(tempmV);
-
-    // Display raw temp on LED's
-    PORTA=tempRAW;
-    _T1IF=0; // clear flag
+    // Display in Celcius
+    getDigits(voltage);
+    putLCD(digit2+48);
+    putLCD('.');
+    putLCD(digit1+48);
+    putLCD(digit0+48);
+    putLCD(' ');
+    putLCD('V');    
 }
+
+// init ADC
+// 1. assign pins - use mask to mask out unwanted channels
+// 2. set control registers
+// 3. turn ADC on
+void initADC(int amask)
+{
+    AD1PCFG = amask; // should have 1's for unused channels
+    AD1CON1 = 0x00E0;
+    AD1CON2 = 0x0000;
+    AD1CON3 = 0x1F01;
+    // leave channel select alone here - use in read
+    
+    // start the ADC module
+    AD1CON1bits.ADON = 1;
+}
+
+// read ADC
+// 1. assign channel to the AD1CHS register
+// 2. set teh AD1CON1bit.SAMP to start the sampling process
+// 3. wait for the DONE flag - AD1CONbits.DONE to be set
+// 4. clear the DONE bit
+// 5. return the digital value 10 bit integer
+int readADC(int ch) // ch channel should be in range 0, 15
+{
+    AD1CHS = ch;
+    AD1CON1bits.SAMP = 1;
+    while(!AD1CON1bits.DONE);
+    AD1CON1bits.DONE = 0;
+    return ADC1BUF0;
+}
+
+// comment/uncomment this to select between read/display temp or potentiometer
+//#define TEMP;
 
 int main(void)
 {
     SYSTEM_Initialize();
+    
     initLCD();
     
-    // Init LED
-    TRISA=0xff00;
+    int tempRAW, potRAW;
+    int long tempC, tempF, voltage;
     
-    // Init ISR to update every half second
-    _T1IP=4; // interrupt priority 4
     T1CON=0x8030;
-    PR1=31250 - 1; // target 500ms => 500ms/62.5ns/256 (prescaler) = 31,250 cycles.
-    
-    _T1IF=0; // always clear the flag before use and in the ISR
-    _T1IE=1; // enable interrupt
-    
-    // Init ADC
-    AD1CON1 = 0x80E0; // 0x8 turns on the ADC
-    AD1CON2 = 0x0000;
-    AD1CHS = 0x0004; // set to temp sensor channel - pin 21, AN4
-    AD1CON3 = 0x1F01;
+    initADC(0xFFCF); // unmask just channels AN4 and AN5
+    TRISA=0xff00; // set all LED pins to outputs to write lower 8 bits of temp value to LED's
     
     while (1)
     {
+#ifdef TEMP
+        tempRAW = readADC(4);
+        PORTA = tempRAW;
+        // we are working in units of mV and tenths of degree C, so no
+        // need to factor in the slope of 10mV per C.
+        tempC = (((long)tempRAW * 3300) / 1023) - 500;
+        // degrees F (not tenths)
+        tempF = (((long)tempRAW * 29700 / 1023) - 2900) / 50;
+        displayTemp(tempC, tempF);
+#else
+        potRAW = readADC(5);
+        PORTA = tempRAW;
+        voltage = ((long)potRAW * 3300) / 1023; // mV
+        displayPot(voltage/10); // two decimal places
+#endif
+        TMR1=0;while(TMR1<32250); // wait 0.5 seconds
     }
 
     return 1;
 }
-
