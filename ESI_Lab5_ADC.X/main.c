@@ -153,7 +153,7 @@ int readADC(int ch) // ch channel should be in range 0, 15
 }
 
 // comment/uncomment this to select between read/display temp or potentiometer
-//#define TEMP;
+#define TEMP;
 
 int main(void)
 {
