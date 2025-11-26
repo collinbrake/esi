@@ -1,92 +1,53 @@
 #include "mcc_generated_files/system.h"
 
-// init ADC
-// 1. assign pins - use mask to mask out unwanted channels
-// 2. set control registers
-// 3. turn ADC on
-void initADC(int amask)
+#define CTS _RD6 // - port D bit 6
+#define RTS _RF12 // output saying we are ready to recieve a UART transmission
+
+// init UART 2
+void initU2(int BRG)
 {
-    AD1PCFG = amask; // should have 1's for unused channels
-    AD1CON1 = 0x00E0;
-    AD1CON2 = 0x0000;
-    AD1CON3 = 0x1F01;
-    // leave channel select alone here - use in read
-    
-    // start the ADC module
-    AD1CON1bits.ADON = 1;
+    U2BRG = BRG; // set baud rate generator register to value for 19200 bits/s
+    U2MODE = 0x8000;
+    U2STA = 0x0400;
+    _TRISF12 = 0; // RTS is an output
+    RTS = 1; // active low signal, we are not ready to rx yet
 }
 
-// read ADC
-// 1. assign channel to the AD1CHS register
-// 2. set teh AD1CON1bit.SAMP to start the sampling process
-// 3. wait for the DONE flag - AD1CONbits.DONE to be set
-// 4. clear the DONE bit
-// 5. return the digital value 10 bit integer
-int readADC(int ch) // ch channel should be in range 0, 15
+// transmit a byte on UART 2
+// return what was transmitted (echo)
+char putU2(char c)
 {
-    AD1CHS = ch;
-    AD1CON1bits.SAMP = 1;
-    while(!AD1CON1bits.DONE);
-    AD1CON1bits.DONE = 0;
-    return ADC1BUF0;
+//    while(CTS); // wait for CTS assert (active low) - flow control
+    while(U2STAbits.UTXBF); // wait for buffer to be not full
+    U2TXREG = c; // tx c
+    return c; // return c
 }
 
-// comment this out to do the pass-through filter
-//#define PWM_GEN;
-
-int c = 0;
-int dc = 1;
-long int adcRaw = 0;
-long int ocVal = 0;
-
-void _ISRFAST _T3Interrupt(void)
+// recieve
+char getU2(void)
 {
-#ifdef PWM_GEN // PWM signal generation application
-    if(++c > 4)
-    {
-        c = 0;
-        dc *= 2;
-        if (dc > 100)
-            dc = 1;
-    }
-    OC1RS = 4*dc;
-#else // pass-through filter application
-    // we are converting an ADC range of [0, 1023] to an
-    // output compare range of [0, 400]
-    OC1RS = ocVal;
-#endif
-    // reset interrupt flag
-    _T3IF = 0;
+    RTS = 0; // tell transmitter we are ready
+    while(!U2STAbits.URXDA); // what until rx buffer full
+    RTS = 1;
+    return U2RXREG;
 }
+
+long int k;
 
 int main(void)
 {
     SYSTEM_Initialize();
     
-    initADC(0xFFF7); // unmask just channel AN3
+    initU2(51);
     
-    // 25us period, prescalar 1
-    T3CON=0x8000;
-    // 25us = (PR3+1)*62.5ns*1 => PR3+1 = 25us / 62.5ns = 400
-    PR3=400-1;
-    
-    OC1R = 0;
-    OC1RS = 0;
-    
-    OC1CON = 0x000E;
-    
-    _T3IE = 1;
-    _T3IF = 0;
     
     while (1)
     {
-#ifdef PWM_GEN
-        Nop();
-#else
-        adcRaw = readADC(3);
-        ocVal = adcRaw*400/1023;
-        Nop();
-#endif
+        while(CTS); // wait for CTS here instead of in putU2
+        putU2(0x55); // alternate 0/1/0/1
+        for(k=0;k<1200;k++); // delay
+        putU2(0xB3);
+        for(k=0;k<300000;k++); // delay for 300,000 for USB
     }
 
     return 1;

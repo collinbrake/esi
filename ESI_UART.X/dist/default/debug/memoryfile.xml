@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <project>
-  <executable name="dist/default/debug/ESI_Lab6_PWM.X.debug.elf">
+  <executable name="dist/default/debug/ESI_Lab7_SPI.X.debug.elf">
     <memory name="data">
       <units>bytes</units>
       <length>8192</length>
-      <used>130</used>
-      <free>8062</free>
+      <used>124</used>
+      <free>8068</free>
     </memory>
     <memory name="program">
       <units>bytes</units>
       <length>131322</length>
-      <used>1155</used>
-      <free>130167</free>
+      <used>1107</used>
+      <free>130215</free>
     </memory>
   </executable>
 </project>

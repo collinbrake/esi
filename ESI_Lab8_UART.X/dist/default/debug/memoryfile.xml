@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <project>
-  <executable name="dist/default/debug/ESI_Lab6_PWM.X.debug.elf">
+  <executable name="dist/default/debug/ESI_Lab8_UART.X.debug.elf">
     <memory name="data">
       <units>bytes</units>
       <length>8192</length>
@@ -11,8 +11,8 @@
     <memory name="program">
       <units>bytes</units>
       <length>131322</length>
-      <used>1155</used>
-      <free>130167</free>
+      <used>2124</used>
+      <free>129198</free>
     </memory>
   </executable>
 </project>

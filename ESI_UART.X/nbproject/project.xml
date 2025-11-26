@@ -3,6 +3,8 @@
     <type>com.microchip.mplab.nbide.embedded.makeproject</type>
     <configuration>
         <data xmlns="http://www.netbeans.org/ns/make-project/1">
+            <name>ESI_UART</name>
+            <name>ESI_Lab7_SPI</name>
             <name>ESI_Lab6_PWM</name>
             <name>ESI_HW8_PWM</name>
             <name>ESI_Lab5_ADC</name>

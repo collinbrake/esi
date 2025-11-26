@@ -1,5 +1,108 @@
 #include "mcc_generated_files/system.h"
 
+void initLCD(void)
+{
+    T1CON = 0x8030;
+    // delay > 30ms - 16us/count -> 1875 counts. Let's just say 2000 counts, 32ms
+    TMR1=0; while(TMR1<2000);
+    // init PMP
+    PMCON=0x8303;
+    PMMODE=0x03FF;
+    PMAEN=0x0001;
+    
+    // PMA address - PMP address 0-13
+    PMADDR=0; // RS line - set to instruction register
+    PMDIN1=0b00111000; // write line and character setup to instruction reg
+    TMR1=0;while(TMR1<3); // delay 48us
+    
+    // leaving RS the same and changing data, will cause another automatic write
+    PMDIN1=0xc; // you will see the enable line going high then low - the enable line going low again actually writes the value out there
+    TMR1=0;while(TMR1<3); // delay 48us
+    
+    // clear screen
+    PMDIN1=0x1;
+    TMR1=0;while(TMR1<110); // just do a bit more than 1.52ms
+    
+    // increment and don't shift
+    PMDIN1 = 0b00001100;
+    TMR1=0;while(TMR1<3); // delay 48us
+}
+
+char readLCD(int addr)
+{
+    // buffer in 44780 that always has valu from previous read - you get junk value first read
+    // when reading instruction or data register, do it twice]
+    int dummy;
+    while(PMMODEbits.BUSY); // make sure PMP is ready to read - as long as busy is 1, it's busy
+    PMADDR=addr;  // address is really only one bit for us - 0/1, instruction/data - could use the others 15 bits of PMP in different applications
+    dummy=PMDIN1; // causes PMP to read on bus - get junk data out of the way - any time you assign from it it does PMP thing
+    while(PMMODEbits.BUSY); // make sure PMP is ready after first read
+    return(PMDIN1); // causes an actual PMP read bus like assignment to   
+}
+
+// when you read instruction register, you get busy bit on 7th bit and address on the rest.
+// and with 0x80 to get only busy bit
+#define BusyLCD() readLCD(0) & 0x80
+
+void writeLCD(int addr, char c)
+{
+    while(BusyLCD());
+    while(PMMODEbits.BUSY);
+    PMADDR=addr;
+    PMDIN1=c;
+}
+
+#define putLCD(d) writeLCD(1, (d))
+#define cmdLCD(c) writeLCD(0, (c))
+#define homeLCD() writeLCD(0,2)
+#define clrLCD() writeLCD(0,1)
+
+char digit0, digit1, digit2;
+
+void getDigits(int long tempi)
+{
+    // first digit
+    digit0 = tempi % 10;
+    tempi = tempi / 10;
+    
+    // second digit
+    digit1 = tempi % 10;
+    tempi = tempi / 10;
+    
+    // third digit
+    digit2 = tempi % 10;
+    tempi = tempi / 10;
+}
+
+void displayTemp(int long tempC, int long tempF)
+{
+    // Clear display
+    clrLCD();
+    
+    // Home LCD
+    homeLCD();
+    
+    // Display in Celcius
+    getDigits(tempC);
+    putLCD(digit2+48);
+    putLCD(digit1+48);
+    putLCD('.');
+    putLCD(digit0+48);
+    putLCD(' ');
+    putLCD('C');
+    
+    // Advance
+    cmdLCD(0b11000000);
+    
+    // Display in Farenheit
+    getDigits(tempF);
+    //putLCD(digit2+48); skip leading zero
+    putLCD(digit1+48);
+    putLCD(digit0+48);
+    putLCD(' ');
+    putLCD('F');    
+}
+
 // init ADC
 // 1. assign pins - use mask to mask out unwanted channels
 // 2. set control registers
@@ -31,63 +134,158 @@ int readADC(int ch) // ch channel should be in range 0, 15
     return ADC1BUF0;
 }
 
-// comment this out to do the pass-through filter
-//#define PWM_GEN;
-
-int c = 0;
-int dc = 1;
-long int adcRaw = 0;
-long int ocVal = 0;
-
-void _ISRFAST _T3Interrupt(void)
+void initSPI1(void)
 {
-#ifdef PWM_GEN // PWM signal generation application
-    if(++c > 4)
-    {
-        c = 0;
-        dc *= 2;
-        if (dc > 100)
-            dc = 1;
-    }
-    OC1RS = 4*dc;
-#else // pass-through filter application
-    // we are converting an ADC range of [0, 1023] to an
-    // output compare range of [0, 400]
-    OC1RS = ocVal;
-#endif
-    // reset interrupt flag
-    _T3IF = 0;
+    SPI1CON1 = 0x0120;
+    SPI1STAT = 0x8000;
+}
+
+unsigned char writeSPI1(unsigned char j)
+{
+    while(SPI1STATbits.SPITBF);
+    SPI1BUF = j;
+    while(!SPI1STATbits.SPIRBF);
+    return SPI1BUF;
 }
 
 int main(void)
 {
     SYSTEM_Initialize();
     
-    initADC(0xFFF7); // unmask just channel AN3
+    initLCD();
+    initSPI1();
+    TRISFbits.TRISF2 = 0;
+    _RF2 = 1;
+    // input button
+    _TRISD6 = 1;
     
-    // 25us period, prescalar 1
-    T3CON=0x8000;
-    // 25us = (PR3+1)*62.5ns*1 => PR3+1 = 25us / 62.5ns = 400
-    PR3=400-1;
+    int tempRAW, potRAW;
+    int long tempC, tempF, voltage;
     
-    OC1R = 0;
-    OC1RS = 0;
-    
-    OC1CON = 0x000E;
-    
-    _T3IE = 1;
-    _T3IF = 0;
+    T1CON=0x8030;
+    initADC(0xFFCF); // unmask just channels AN4 and AN5
+    TRISA=0xff00; // set all LED pins to outputs to write lower 8 bits of temp value to LED's
     
     while (1)
     {
-#ifdef PWM_GEN
-        Nop();
-#else
-        adcRaw = readADC(3);
-        ocVal = adcRaw*400/1023;
-        Nop();
-#endif
+        tempRAW = readADC(4);
+        PORTA = tempRAW;
+        // we are working in units of mV and tenths of degree C, so no
+        // need to factor in the slope of 10mV per C.
+        tempC = (((long)tempRAW * 3300) / 1023) - 500;
+        // degrees F (not tenths)
+        tempF = (((long)tempRAW * 29700 / 1023) - 2900) / 50;
+        displayTemp(tempC, tempF);
+        
+        _RF2 = 0;
+        writeSPI1(0x76);
+        // Write to 7-segment
+        if(_RD6==1)
+        {
+            getDigits(tempC);
+            writeSPI1(0x79);
+            writeSPI1(0x00);
+            writeSPI1(digit2+48);
+            writeSPI1(0x79);
+            writeSPI1(0x01);
+            writeSPI1(digit1+48);
+            writeSPI1(0x79);
+            writeSPI1(0x02);
+            writeSPI1(digit0+48);
+            writeSPI1(0x79);
+            writeSPI1(0x03);
+            writeSPI1(0x0C);
+            // decimal
+            writeSPI1(0x77);
+            writeSPI1(0x02);
+        }
+        else
+        {
+            getDigits(tempF);
+//            writeSPI1(0x79);
+//            writeSPI1(0x00);
+//            writeSPI1(digit2+48);
+            writeSPI1(0x79);
+            writeSPI1(0x01);
+            writeSPI1(digit1+48);
+            writeSPI1(0x79);
+            writeSPI1(0x02);
+            writeSPI1(digit0+48);
+            writeSPI1(0x79);
+            writeSPI1(0x03);
+            writeSPI1(0x0F);
+        }
+        _RF2 = 1; // set chip select high
+        
+        // delay
+        TMR1=0;while(TMR1<32250); // wait 0.5 seconds
     }
 
     return 1;
 }
+
+// group # code ===========================
+
+//#include "mcc_generated_files/system.h"
+//
+//void initSPI1(void)
+//{
+//    SPI1CON1 = 0x0120;
+//    SPI1STAT = 0x8000;
+//}
+//
+//unsigned char writeSPI1(unsigned char j)
+//{
+//    while(SPI1STATbits.SPITBF);
+//    SPI1BUF = j;
+//    while(!SPI1STATbits.SPIRBF);
+//    return SPI1BUF;
+//}
+//
+//char onesComp = 0;
+//
+//void _ISRFAST _T1Interrupt(void)
+//{
+//    _RF2 = 0;
+//    writeSPI1(0x76);
+//    writeSPI1(0x79);
+//    writeSPI1(0x03);
+//    if (!onesComp)
+//    {
+//        writeSPI1(0x02);
+//        // display ones complement next time
+//        onesComp = 1;
+//    }
+//    else
+//    {
+//        writeSPI1(0x0b);
+//        onesComp = 0;
+//    }
+//    _RF2 = 1; // set chip select high
+//    // reset interrupt flag
+//    _T1IF = 0;
+//}
+//
+//int main(void)
+//{
+//    SYSTEM_Initialize();
+//    
+//    // prescalar 250
+//    T1CON=0x8030;
+//    // 1 s = (PR1+1)*62.5ns*1*256 => PR3+1 = 1 s / 62.5ns / 256 = 62,500
+//    PR1=62500-1;
+//    
+//    _T1IE = 1;
+//    _T1IF = 0;
+//    
+//    initSPI1();
+//    TRISFbits.TRISF2 = 0;
+//    _RF2 = 1;
+//    
+//    while (1)
+//    {
+//        Nop();
+//    }
+//
+//    return 1;
+//}
