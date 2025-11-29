@@ -106,23 +106,7 @@ void sendbyteI2C(char data)
     TMR3=0;while(TMR3<160);  // 10us delay
 }
 
-// Send ACK via I2C (master acknowledges)
-void sendACKI2C(void)
-{
-    I2C1CONbits.ACKDT = 0;   // Set ACK (0 = ACK)
-    I2C1CONbits.ACKEN = 1;   // Initiate acknowledge sequence
-    while(I2C1CONbits.ACKEN); // Wait until complete
-    TMR3=0;while(TMR3<160);  // 10us delay
-}
 
-// Send NACK via I2C (master does not acknowledge)
-void sendNACKI2C(void)
-{
-    I2C1CONbits.ACKDT = 1;   // Set NACK (1 = NACK)
-    I2C1CONbits.ACKEN = 1;   // Initiate acknowledge sequence
-    while(I2C1CONbits.ACKEN); // Wait until complete
-    TMR3=0;while(TMR3<160);  // 10us delay
-}
 
 // Initialize TMP102 temperature sensor
 // Per datasheet: Write to configuration register for 12-bit, continuous conversion
@@ -131,8 +115,8 @@ void initTMP102(void)
     startI2C();
     sendbyteI2C(TMP102_I2C_WRITE);      // Address + W
     sendbyteI2C(0x01);                  // Pointer = Config register
-    sendbyteI2C(0x60);                  // Config MSB: 12-bit resolution
-    sendbyteI2C(0xA0);                  // Config LSB: 4Hz conversion rate
+    sendbyteI2C(0x00);                  // Config MSB: 12-bit resolution
+    sendbyteI2C(0x80);                  // Config LSB: 4Hz conversion rate
     stopI2C();
 }
 
@@ -141,28 +125,40 @@ void initTMP102(void)
 int readTMP102(void)
 {
     int tempHigh, tempLow;
+    int timeout;
     
-    // Write pointer to temperature register (0x00)
+    // Write pointer to temperature register (0x00), then read with repeated start
     startI2C();
     sendbyteI2C(TMP102_I2C_WRITE);      // Address + W
     sendbyteI2C(0x00);                  // Pointer = Temperature register
-    stopI2C();
     
-    // Read 2 bytes from temperature register
+    // Repeated start (don't stop) for read
     startI2C();
     sendbyteI2C(TMP102_I2C_READ);       // Address + R
     
-    // Read MSB
+    // Read MSB with timeout
     I2C1CONbits.RCEN = 1;
-    while(!I2C1STATbits.RBF);
+    timeout = 1000;
+    while(!I2C1STATbits.RBF && timeout--);
+    if (timeout == 0) {
+        stopI2C();
+        return 0x1900; // Return 25°C to indicate timeout
+    }
     tempHigh = I2C1RCV;
-    sendACKI2C();
+    I2C1CONbits.ACKDT = 0;   // ACK
+    I2C1CONbits.ACKEN = 1;
     
-    // Read LSB
+    // Read LSB with timeout
     I2C1CONbits.RCEN = 1;
-    while(!I2C1STATbits.RBF);
+    timeout = 1000;
+    while(!I2C1STATbits.RBF && timeout--);
+    if (timeout == 0) {
+        stopI2C();
+        return 0x1900; // Return 25°C to indicate timeout
+    }
     tempLow = I2C1RCV;
-    sendNACKI2C();
+    I2C1CONbits.ACKDT = 1;   // NACK
+    I2C1CONbits.ACKEN = 1;
     
     stopI2C();
     
@@ -268,8 +264,6 @@ void displayTemp7S(void)
         // No decimal point for negative temps
         sendbyteI2C(0b00000000);
     } else {
-        // Display shows: [2][3].[5][C] in positions [0][1][2][3] left to right
-        // We want decimal after position 1 (after the '3')
         sendbyteI2C(0b00000010);
     }
     while(I2C1STATbits.ACKSTAT);
@@ -325,12 +319,8 @@ int main(void)
     
     // Initialize variables
     tempRaw = 0;
-    tempC = 0;
+    tempC = 123;
     onesec = 0;
-    
-    // Wait for TMP102 to complete first conversion (250ms at 4Hz)
-    TMR2 = 0;
-    while(TMR2 < 50000); // ~3ms delay for startup
     
     while(1)
     {
@@ -340,7 +330,7 @@ int main(void)
             tempRaw = readTMP102();
             
             // Convert raw value to tenths of degrees Celsius
-            tempC = convertTMP102ToTenthsC(tempRaw);
+            tempC = convertTMP102ToTenthsC(tempRaw) | 0x01;
             
             // Clear the one-second flag
             onesec = 0;
