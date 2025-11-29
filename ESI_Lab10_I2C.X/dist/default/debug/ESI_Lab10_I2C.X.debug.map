@@ -4,11 +4,11 @@ Tool Name:
   c:\program files\microchip\xc16\v2.10\bin\bin\..\bin/elf-ld.exe
 
 Command:
-  -TC:\\Users\\ColBra\\AppData\\Local\\Temp\\tmp00005434.00 \
-  -TC:\\Users\\ColBra\\AppData\\Local\\Temp\\tmp00005434.01 \
-  -TC:\\Users\\ColBra\\AppData\\Local\\Temp\\tmp00005434.02 \
-  -TC:\\Users\\ColBra\\AppData\\Local\\Temp\\tmp00005434.03 \
-  -TC:\\Users\\ColBra\\AppData\\Local\\Temp\\tmp00005434.04 \
+  -TC:\\Users\\ColBra\\AppData\\Local\\Temp\\tmp000055d0.00 \
+  -TC:\\Users\\ColBra\\AppData\\Local\\Temp\\tmp000055d0.01 \
+  -TC:\\Users\\ColBra\\AppData\\Local\\Temp\\tmp000055d0.02 \
+  -TC:\\Users\\ColBra\\AppData\\Local\\Temp\\tmp000055d0.03 \
+  -TC:\\Users\\ColBra\\AppData\\Local\\Temp\\tmp000055d0.04 \
   -p24FJ128GA010 \
   --mdfp=C:/Program Files/Microchip/MPLABX/v6.20/packs/Microchip/PIC24F-GA-GB_DFP/1.9.336/xc16 \
   -o \
@@ -88,11 +88,11 @@ Default Scalar Model: Small
 section                    address   length (PC units)   length (bytes) (dec)
 -------                    -------   -----------------   --------------------
 .text                        0x200               0x1b2           0x28b  (651)
-.text                        0x3b2               0x2b4           0x40e  (1038)
-.dinit                       0x666                0x1c            0x2a  (42)
-.text                        0x682                0x3c            0x5a  (90)
+.text                        0x3b2               0x348           0x4ec  (1260)
+.dinit                       0x6fa                0x1c            0x2a  (42)
+.text                        0x716                0x3c            0x5a  (90)
 
-                 Total "program" memory used (bytes):          0x71d  (1821) 1%
+                 Total "program" memory used (bytes):          0x7fb  (2043) 1%
 
 
 "data" Memory  [Origin = 0x800, Length = 0x2000]
@@ -129,7 +129,8 @@ External Symbols in Data Memory (by address):
                     0x0850                  _digit0
                     0x0851                  _digit1
                     0x0852                  _digit2
-                    0x0854                  _tempRaw
+                    0x0853                  _digit3
+                    0x0854                  _isNegative
                     0x0856                  _tempC
                     0x0858                  _trapSrcAddr
 
@@ -138,41 +139,41 @@ External Symbols in Data Memory (by name):
                     0x0850                  _digit0
                     0x0851                  _digit1
                     0x0852                  _digit2
+                    0x0853                  _digit3
+                    0x0854                  _isNegative
                     0x0856                  _tempC
-                    0x0854                  _tempRaw
                     0x0858                  _trapSrcAddr
 
 External Symbols in Program Memory (by address):
 
                   0x000200                  __resetPRI
                   0x00023c                  __psv_init
-                  0x000252                  __data_init
                   0x000252                  __data_init_standard
+                  0x000252                  __data_init
                   0x00034a                  __DefaultInterrupt
                   0x000350                  ___divsi3
                   0x00036e                  ___modsi3
                   0x00038c                  ___udivsi3
                   0x0003ac                  ___umodsi3
                   0x0003b2                  _getDigits
-                  0x0003fc                  _initI2C
-                  0x000412                  _startI2C
-                  0x00043c                  _stopI2C
-                  0x000466                  _getbyteI2C
+                  0x000420                  _initI2C
+                  0x000436                  _startI2C
+                  0x000460                  _stopI2C
                   0x00048a                  _sendbyteI2C
                   0x0004ac                  _displayTemp7S
-                  0x0005dc                  _main
-                  0x0005f2                  _PIN_MANAGER_Initialize
-                  0x000638                  _CLOCK_Initialize
-                  0x00069c                  _where_was_i
-                  0x0006ac                  _SYSTEM_Initialize
-                  0x0006b8                  _INTERRUPT_Initialize
+                  0x000666                  _main
+                  0x000686                  _PIN_MANAGER_Initialize
+                  0x0006cc                  _CLOCK_Initialize
+                  0x000730                  _where_was_i
+                  0x000740                  _SYSTEM_Initialize
+                  0x00074c                  _INTERRUPT_Initialize
 
 External Symbols in Program Memory (by name):
 
-                  0x000638                  _CLOCK_Initialize
-                  0x0006b8                  _INTERRUPT_Initialize
-                  0x0005f2                  _PIN_MANAGER_Initialize
-                  0x0006ac                  _SYSTEM_Initialize
+                  0x0006cc                  _CLOCK_Initialize
+                  0x00074c                  _INTERRUPT_Initialize
+                  0x000686                  _PIN_MANAGER_Initialize
+                  0x000740                  _SYSTEM_Initialize
                   0x00034a                  __DefaultInterrupt
                   0x000350                  ___divsi3
                   0x00036e                  ___modsi3
@@ -184,13 +185,12 @@ External Symbols in Program Memory (by name):
                   0x000200                  __resetPRI
                   0x0004ac                  _displayTemp7S
                   0x0003b2                  _getDigits
-                  0x000466                  _getbyteI2C
-                  0x0003fc                  _initI2C
-                  0x0005dc                  _main
+                  0x000420                  _initI2C
+                  0x000666                  _main
                   0x00048a                  _sendbyteI2C
-                  0x000412                  _startI2C
-                  0x00043c                  _stopI2C
-                  0x00069c                  _where_was_i
+                  0x000436                  _startI2C
+                  0x000460                  _stopI2C
+                  0x000730                  _where_was_i
 
 Memory Configuration
 
@@ -309,7 +309,7 @@ __CONFIG1
 .comment
  *(.comment)
 
-.debug_info       0x000000       0x1a93
+.debug_info       0x000000       0x1a6f
  *(.debug_info)
  .debug_info      0x000000        0x219 build/default/debug/mcc_generated_files/clock.o
  .debug_info      0x000219         0x9e build/default/debug/mcc_generated_files/where_was_i.o
@@ -317,14 +317,14 @@ __CONFIG1
  .debug_info      0x000725        0x3a5 build/default/debug/mcc_generated_files/traps.o
  .debug_info      0x000aca        0x309 build/default/debug/mcc_generated_files/system.o
  .debug_info      0x000dd3        0x167 build/default/debug/mcc_generated_files/interrupt_manager.o
- .debug_info      0x000f3a        0x927 build/default/debug/main.o
- .debug_info      0x001861         0x8c c:/program files/microchip/xc16/v2.10/bin/bin/../../lib\libc99-pic30-elf.a(divsi3.XX_o)
- .debug_info      0x0018ed         0x8c c:/program files/microchip/xc16/v2.10/bin/bin/../../lib\libc99-pic30-elf.a(modsi3.XX_o)
- .debug_info      0x001979         0x8d c:/program files/microchip/xc16/v2.10/bin/bin/../../lib\libc99-pic30-elf.a(udivsi3.XX_o)
- .debug_info      0x001a06         0x8d c:/program files/microchip/xc16/v2.10/bin/bin/../../lib\libc99-pic30-elf.a(umodsi3.XX_o)
+ .debug_info      0x000f3a        0x903 build/default/debug/main.o
+ .debug_info      0x00183d         0x8c c:/program files/microchip/xc16/v2.10/bin/bin/../../lib\libc99-pic30-elf.a(divsi3.XX_o)
+ .debug_info      0x0018c9         0x8c c:/program files/microchip/xc16/v2.10/bin/bin/../../lib\libc99-pic30-elf.a(modsi3.XX_o)
+ .debug_info      0x001955         0x8d c:/program files/microchip/xc16/v2.10/bin/bin/../../lib\libc99-pic30-elf.a(udivsi3.XX_o)
+ .debug_info      0x0019e2         0x8d c:/program files/microchip/xc16/v2.10/bin/bin/../../lib\libc99-pic30-elf.a(umodsi3.XX_o)
  *(.gnu.linkonce.wi.*)
 
-.debug_abbrev     0x000000        0x447
+.debug_abbrev     0x000000        0x456
  *(.debug_abbrev)
  .debug_abbrev    0x000000         0x59 build/default/debug/mcc_generated_files/clock.o
  .debug_abbrev    0x000059          0x1 build/default/debug/mcc_generated_files/mcc.o
@@ -333,13 +333,13 @@ __CONFIG1
  .debug_abbrev    0x0000d8        0x100 build/default/debug/mcc_generated_files/traps.o
  .debug_abbrev    0x0001d8         0xb4 build/default/debug/mcc_generated_files/system.o
  .debug_abbrev    0x00028c         0x34 build/default/debug/mcc_generated_files/interrupt_manager.o
- .debug_abbrev    0x0002c0        0x137 build/default/debug/main.o
- .debug_abbrev    0x0003f7         0x14 c:/program files/microchip/xc16/v2.10/bin/bin/../../lib\libc99-pic30-elf.a(divsi3.XX_o)
- .debug_abbrev    0x00040b         0x14 c:/program files/microchip/xc16/v2.10/bin/bin/../../lib\libc99-pic30-elf.a(modsi3.XX_o)
- .debug_abbrev    0x00041f         0x14 c:/program files/microchip/xc16/v2.10/bin/bin/../../lib\libc99-pic30-elf.a(udivsi3.XX_o)
- .debug_abbrev    0x000433         0x14 c:/program files/microchip/xc16/v2.10/bin/bin/../../lib\libc99-pic30-elf.a(umodsi3.XX_o)
+ .debug_abbrev    0x0002c0        0x146 build/default/debug/main.o
+ .debug_abbrev    0x000406         0x14 c:/program files/microchip/xc16/v2.10/bin/bin/../../lib\libc99-pic30-elf.a(divsi3.XX_o)
+ .debug_abbrev    0x00041a         0x14 c:/program files/microchip/xc16/v2.10/bin/bin/../../lib\libc99-pic30-elf.a(modsi3.XX_o)
+ .debug_abbrev    0x00042e         0x14 c:/program files/microchip/xc16/v2.10/bin/bin/../../lib\libc99-pic30-elf.a(udivsi3.XX_o)
+ .debug_abbrev    0x000442         0x14 c:/program files/microchip/xc16/v2.10/bin/bin/../../lib\libc99-pic30-elf.a(umodsi3.XX_o)
 
-.debug_line       0x000000        0x7df
+.debug_line       0x000000        0x7ee
  *(.debug_line)
  .debug_line      0x000000        0x120 build/default/debug/mcc_generated_files/clock.o
  .debug_line      0x000120         0x1a build/default/debug/mcc_generated_files/mcc.o
@@ -348,26 +348,26 @@ __CONFIG1
  .debug_line      0x0002c6        0x14c build/default/debug/mcc_generated_files/traps.o
  .debug_line      0x000412        0x11e build/default/debug/mcc_generated_files/system.o
  .debug_line      0x000530         0x55 build/default/debug/mcc_generated_files/interrupt_manager.o
- .debug_line      0x000585        0x157 build/default/debug/main.o
- .debug_line      0x0006dc         0x43 c:/program files/microchip/xc16/v2.10/bin/bin/../../lib\libc99-pic30-elf.a(divsi3.XX_o)
- .debug_line      0x00071f         0x43 c:/program files/microchip/xc16/v2.10/bin/bin/../../lib\libc99-pic30-elf.a(modsi3.XX_o)
- .debug_line      0x000762         0x45 c:/program files/microchip/xc16/v2.10/bin/bin/../../lib\libc99-pic30-elf.a(udivsi3.XX_o)
- .debug_line      0x0007a7         0x38 c:/program files/microchip/xc16/v2.10/bin/bin/../../lib\libc99-pic30-elf.a(umodsi3.XX_o)
+ .debug_line      0x000585        0x166 build/default/debug/main.o
+ .debug_line      0x0006eb         0x43 c:/program files/microchip/xc16/v2.10/bin/bin/../../lib\libc99-pic30-elf.a(divsi3.XX_o)
+ .debug_line      0x00072e         0x43 c:/program files/microchip/xc16/v2.10/bin/bin/../../lib\libc99-pic30-elf.a(modsi3.XX_o)
+ .debug_line      0x000771         0x45 c:/program files/microchip/xc16/v2.10/bin/bin/../../lib\libc99-pic30-elf.a(udivsi3.XX_o)
+ .debug_line      0x0007b6         0x38 c:/program files/microchip/xc16/v2.10/bin/bin/../../lib\libc99-pic30-elf.a(umodsi3.XX_o)
 
-.debug_frame      0x000000        0x2dc
+.debug_frame      0x000000        0x2c2
  *(.debug_frame)
  .debug_frame     0x000000         0x2e build/default/debug/mcc_generated_files/clock.o
  .debug_frame     0x00002e         0x2e build/default/debug/mcc_generated_files/pin_manager.o
  .debug_frame     0x00005c        0x140 build/default/debug/mcc_generated_files/traps.o
  .debug_frame     0x00019c         0x2e build/default/debug/mcc_generated_files/system.o
  .debug_frame     0x0001ca         0x2e build/default/debug/mcc_generated_files/interrupt_manager.o
- .debug_frame     0x0001f8         0xe4 build/default/debug/main.o
+ .debug_frame     0x0001f8         0xca build/default/debug/main.o
 
-.debug_str        0x000000         0x45
+.debug_str        0x000000         0x50
  *(.debug_str)
  .debug_str       0x000000          0xc build/default/debug/mcc_generated_files/traps.o
  .debug_str       0x00000c          0xc build/default/debug/mcc_generated_files/system.o
- .debug_str       0x000018         0x2d build/default/debug/main.o
+ .debug_str       0x000018         0x38 build/default/debug/main.o
 
 .debug_loc
  *(.debug_loc)
@@ -376,7 +376,7 @@ __CONFIG1
  *(.debug_macinfo)
 
 .debug_pubnames
-                  0x000000        0x1cc
+                  0x000000        0x1cb
  *(.debug_pubnames)
  .debug_pubnames
                   0x000000         0x27 build/default/debug/mcc_generated_files/clock.o
@@ -389,7 +389,7 @@ __CONFIG1
  .debug_pubnames
                   0x0000eb         0x2b build/default/debug/mcc_generated_files/interrupt_manager.o
  .debug_pubnames
-                  0x000116         0xb6 build/default/debug/main.o
+                  0x000116         0xb5 build/default/debug/main.o
 
 .debug_ranges
  *(.debug_ranges)
@@ -1048,7 +1048,8 @@ __c30_signature
                     0x0850                  _digit0
                     0x0851                  _digit1
                     0x0852                  _digit2
-                    0x0854                  _tempRaw
+                    0x0853                  _digit3
+                    0x0854                  _isNegative
                     0x0856                  _tempC
 
 mcc_generated_files/where_was_i.s.scn1
@@ -1090,30 +1091,29 @@ mcc_generated_files/where_was_i.s.scn1
 .config_IESO      0x0157fc          0x2
  .config_IESO     0x0157fc          0x2 build/default/debug/mcc_generated_files/system.o
 
-.text             0x0003b2        0x2b4
- .text            0x0003b2        0x240 build/default/debug/main.o
+.text             0x0003b2        0x348
+ .text            0x0003b2        0x2d4 build/default/debug/main.o
                   0x0003b2                  _getDigits
-                  0x0003fc                  _initI2C
-                  0x000412                  _startI2C
-                  0x00043c                  _stopI2C
-                  0x000466                  _getbyteI2C
+                  0x000420                  _initI2C
+                  0x000436                  _startI2C
+                  0x000460                  _stopI2C
                   0x00048a                  _sendbyteI2C
                   0x0004ac                  _displayTemp7S
-                  0x0005dc                  _main
- .text            0x0005f2         0x46 build/default/debug/mcc_generated_files/pin_manager.o
-                  0x0005f2                  _PIN_MANAGER_Initialize
- .text            0x000638         0x2e build/default/debug/mcc_generated_files/clock.o
-                  0x000638                  _CLOCK_Initialize
+                  0x000666                  _main
+ .text            0x000686         0x46 build/default/debug/mcc_generated_files/pin_manager.o
+                  0x000686                  _PIN_MANAGER_Initialize
+ .text            0x0006cc         0x2e build/default/debug/mcc_generated_files/clock.o
+                  0x0006cc                  _CLOCK_Initialize
 
-.dinit            0x000666         0x1c
- .dinit           0x000666         0x1c data_init
+.dinit            0x0006fa         0x1c
+ .dinit           0x0006fa         0x1c data_init
 
-.text             0x000682         0x3c
- .text            0x000682         0x1a build/default/debug/mcc_generated_files/traps.o
-                  0x000682                  _TRAPS_halt_on_error
- .text            0x00069c         0x10 build/default/debug/mcc_generated_files/where_was_i.o
-                  0x00069c                  _where_was_i
- .text            0x0006ac          0xc build/default/debug/mcc_generated_files/system.o
-                  0x0006ac                  _SYSTEM_Initialize
- .text            0x0006b8          0x6 build/default/debug/mcc_generated_files/interrupt_manager.o
-                  0x0006b8                  _INTERRUPT_Initialize
+.text             0x000716         0x3c
+ .text            0x000716         0x1a build/default/debug/mcc_generated_files/traps.o
+                  0x000716                  _TRAPS_halt_on_error
+ .text            0x000730         0x10 build/default/debug/mcc_generated_files/where_was_i.o
+                  0x000730                  _where_was_i
+ .text            0x000740          0xc build/default/debug/mcc_generated_files/system.o
+                  0x000740                  _SYSTEM_Initialize
+ .text            0x00074c          0x6 build/default/debug/mcc_generated_files/interrupt_manager.o
+                  0x00074c                  _INTERRUPT_Initialize
