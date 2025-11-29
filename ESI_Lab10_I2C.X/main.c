@@ -107,7 +107,7 @@ void displayTemp7S(void)
     
     // Display format depends on sign
     if (isNegative) {
-        // Negative: show "-XX" (no decimal, no tenths digit)
+        // Negative: show "-XXC" (no decimal, no tenths digit)
         sendbyteI2C('-');
         while(I2C1STATbits.ACKSTAT);
         TMR3=0;while(TMR3<1600);
@@ -120,11 +120,11 @@ void displayTemp7S(void)
         while(I2C1STATbits.ACKSTAT);
         TMR3=0;while(TMR3<1600);
         
-        sendbyteI2C(' ');
+        sendbyteI2C('C');
         while(I2C1STATbits.ACKSTAT);
         TMR3=0;while(TMR3<1600);
     } else {
-        // Positive: show "23.5C" 
+        // Positive: show "XX.XC" 
         // Sparkfun display fills from left to right
         // Send leftmost character first
         sendbyteI2C(digit2 + '0'); // tens place (2)
@@ -196,7 +196,7 @@ int main(void)
     
     // Initialize tempC with a test value
     // Change this value to test different temperatures
-    tempC = 235; // Represents 23.5°C
+    tempC = -235; // Represents 23.5°C
     
     while(1)
     {

@@ -4,11 +4,11 @@ Tool Name:
   c:\program files\microchip\xc16\v2.10\bin\bin\..\bin/elf-ld.exe
 
 Command:
-  -TC:\\Users\\ColBra\\AppData\\Local\\Temp\\tmp000055d0.00 \
-  -TC:\\Users\\ColBra\\AppData\\Local\\Temp\\tmp000055d0.01 \
-  -TC:\\Users\\ColBra\\AppData\\Local\\Temp\\tmp000055d0.02 \
-  -TC:\\Users\\ColBra\\AppData\\Local\\Temp\\tmp000055d0.03 \
-  -TC:\\Users\\ColBra\\AppData\\Local\\Temp\\tmp000055d0.04 \
+  -TC:\\Users\\ColBra\\AppData\\Local\\Temp\\tmp00003480.00 \
+  -TC:\\Users\\ColBra\\AppData\\Local\\Temp\\tmp00003480.01 \
+  -TC:\\Users\\ColBra\\AppData\\Local\\Temp\\tmp00003480.02 \
+  -TC:\\Users\\ColBra\\AppData\\Local\\Temp\\tmp00003480.03 \
+  -TC:\\Users\\ColBra\\AppData\\Local\\Temp\\tmp00003480.04 \
   -p24FJ128GA010 \
   --mdfp=C:/Program Files/Microchip/MPLABX/v6.20/packs/Microchip/PIC24F-GA-GB_DFP/1.9.336/xc16 \
   -o \
