@@ -40,7 +40,7 @@ volatile char onesec = 0; // Flag set by Timer1 interrupt every 1 second
 #define TMP102_CONFIG_REG 0x01    // Configuration Register pointer
 
 // 7-segment display defines
-#define S7S_ADDR 0x71             // 7-bit address (default for Sparkfun display)
+#define S7S_ADDR 0x61             // 7-bit address (default for Sparkfun display)
 #define S7S_I2C_WRITE (S7S_ADDR << 1) // 7-bit address shifted left + write bit
 
 // Extract individual digits from temperature value
@@ -193,13 +193,27 @@ int convertTMP102ToTenthsC(int raw)
 // Display temperature on 7-segment display via I2C
 void displayTemp7S(void)
 {
+    int timeout;
+    
     // Get the digits of temperature
     getDigits(tempC);
     
     _RF2 = 1; // Trigger signal for logic analyzer
     startI2C();
     sendbyteI2C(S7S_I2C_WRITE); // Send device address + write bit
-    while(I2C1STATbits.ACKSTAT); // Wait for ACK from display
+    
+    // Check for ACK with timeout (device may not respond if wrong address)
+    timeout = 1000;
+    while(I2C1STATbits.ACKSTAT && timeout--); // Wait for ACK or timeout
+    
+    if (timeout == 0) {
+        // No ACK received - wrong address, device not present
+        stopI2C();
+        _RF2 = 0;
+        TMR3=0;while(TMR3<1600); // Small delay before retry
+        return; // Exit and will retry on next call
+    }
+    
     TMR3=0;while(TMR3<1600); // 100us delay for logic analyzer visibility
     
     // Display format depends on sign
