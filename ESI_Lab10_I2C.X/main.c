@@ -114,7 +114,7 @@ void initTMP102(void)
 {
     startI2C();
     sendbyteI2C(TMP102_I2C_WRITE);      // Address + W
-    sendbyteI2C(0x01);                  // Pointer = Config register
+    sendbyteI2C(TMP102_CONFIG_REG);                  // Pointer = Config register
     sendbyteI2C(0x00);                  // Config MSB: 12-bit resolution
     sendbyteI2C(0x80);                  // Config LSB: 4Hz conversion rate
     stopI2C();
@@ -127,12 +127,13 @@ int readTMP102(void)
     int tempHigh, tempLow;
     int timeout;
     
-    // Write pointer to temperature register (0x00), then read with repeated start
+    // Write pointer to temperature register (0x00)
     startI2C();
     sendbyteI2C(TMP102_I2C_WRITE);      // Address + W
-    sendbyteI2C(0x00);                  // Pointer = Temperature register
+    sendbyteI2C(TMP102_TEMP_REG);       // Pointer = Temperature register
+    stopI2C();
     
-    // Repeated start (don't stop) for read
+    // Read
     startI2C();
     sendbyteI2C(TMP102_I2C_READ);       // Address + R
     
