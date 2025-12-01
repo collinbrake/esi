@@ -40,7 +40,7 @@ volatile char onesec = 0; // Flag set by Timer1 interrupt every 1 second
 #define TMP102_CONFIG_REG 0x01    // Configuration Register pointer
 
 // 7-segment display defines
-#define S7S_ADDR 0x61             // 7-bit address (default for Sparkfun display)
+#define S7S_ADDR 0x71             // 7-bit address (default for Sparkfun display)
 #define S7S_I2C_WRITE (S7S_ADDR << 1) // 7-bit address shifted left + write bit
 
 // Extract individual digits from temperature value
@@ -115,7 +115,7 @@ void initTMP102(void)
     startI2C();
     sendbyteI2C(TMP102_I2C_WRITE);      // Address + W
     sendbyteI2C(TMP102_CONFIG_REG);                  // Pointer = Config register
-    sendbyteI2C(0x00);                  // Config MSB: 12-bit resolution
+    sendbyteI2C(0x60);                  // Config MSB: 12-bit resolution
     sendbyteI2C(0x80);                  // Config LSB: 4Hz conversion rate
     stopI2C();
 }
@@ -127,15 +127,26 @@ int readTMP102(void)
     int tempHigh, tempLow;
     int timeout;
     
+    _RF2 = 1;
     // Write pointer to temperature register (0x00)
     startI2C();
     sendbyteI2C(TMP102_I2C_WRITE);      // Address + W
+    timeout = 1000;
+    while(I2C1STATbits.ACKSTAT && timeout > 10){
+        timeout = timeout - 1;
+    }
     sendbyteI2C(TMP102_TEMP_REG);       // Pointer = Temperature register
     stopI2C();
+    _RF2 = 0;
     
+    _RF2 = 1;
     // Read
     startI2C();
     sendbyteI2C(TMP102_I2C_READ);       // Address + R
+    timeout = 1000;
+    while(I2C1STATbits.ACKSTAT && timeout > 10){
+        timeout = timeout - 1;
+    }
     
     // Read MSB with timeout
     I2C1CONbits.RCEN = 1;
@@ -162,6 +173,7 @@ int readTMP102(void)
     I2C1CONbits.ACKEN = 1;
     
     stopI2C();
+    _RF2 = 0;
     
     return (tempHigh << 8) | tempLow;
 }
@@ -204,11 +216,13 @@ void displayTemp7S(void)
     
     // Check for ACK with timeout (device may not respond if wrong address)
     timeout = 1000;
-    while(I2C1STATbits.ACKSTAT && timeout--); // Wait for ACK or timeout
+    while(I2C1STATbits.ACKSTAT && timeout > 10){
+        timeout = timeout - 1;
+    } // Wait for ACK or timeout
     
-    if (timeout == 0) {
+    if (timeout <= 10) {
         // No ACK received - wrong address, device not present
-        stopI2C();
+//        stopI2C();
         _RF2 = 0;
         TMR3=0;while(TMR3<1600); // Small delay before retry
         return; // Exit and will retry on next call
@@ -345,14 +359,18 @@ int main(void)
             tempRaw = readTMP102();
             
             // Convert raw value to tenths of degrees Celsius
-            tempC = convertTMP102ToTenthsC(tempRaw) | 0x01;
+            tempC = convertTMP102ToTenthsC(tempRaw);
             
             // Clear the one-second flag
             onesec = 0;
+            
+//            tempC++;
+            
+//            displayTemp7S();
         }
         
         // Continuously display temperature on 7-segment display
-        displayTemp7S();
+        
         
         // Small delay between display updates
         TMR3=0;while(TMR3<16000); // ~1ms delay
